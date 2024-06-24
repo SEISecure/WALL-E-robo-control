@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <!-- Seek bar control used for brightness and GRG visibility -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:fadeScrollbars="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="WALL-E control"
+                android:textColor="@android:color/white"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/infoText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Hold Buttons for Robot Movement"
+                android:textColor="@android:color/white"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/modeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Current Mode:" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="51dp" />
+
+            <Button
+                android:id="@+id/buttonForward"
+                style="@style/darkButton"
+                android:layout_width="94dp"
+                android:layout_height="76dp"
+                android:padding="6dp"
+                android:text="Forward" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonLeft"
+                    style="@style/darkButton"
+                    android:layout_width="188dp"
+                    android:layout_height="47dp"
+                    android:padding="6dp"
+                    android:text="Turn Left" />
+
+                <Button
+                    android:id="@+id/buttonRight"
+                    style="@style/darkButton"
+                    android:layout_width="189dp"
+                    android:layout_height="47dp"
+                    android:padding="6dp"
+                    android:text="Turn Right" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/buttonBack"
+                style="@style/darkButton"
+                android:layout_width="94dp"
+                android:layout_height="67dp"
+                android:padding="6dp"
+                android:text="Back" />
+
+            <!-- Seek bar control used for cover selection removed
+            <Button
+                android:id="@+id/cover_selector"
+                style="@style/darkButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="Cover Selector" />
+
+            <SeekBar
+                android:id="@+id/cover_seek_bar_control"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="1dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:background="@color/darker_gray"
+                android:visibility="gone"/>
+            -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="127dp" />
+
+            <Button
+                android:id="@+id/buttonMode"
+                style="@style/darkButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="Change Mode" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="127dp" />
+
+            <ImageView
+                android:id="@+id/cameraImage"
+                android:layout_width="match_parent"
+                android:layout_height="223dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
+
