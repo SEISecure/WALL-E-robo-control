@@ -1,3 +1,11 @@
+6/27/2024 ~ version 0.0.2 (semi-tested)
+
+-semi tested for buttons. 
+-sends over pub sub commands in a reliable but non-exact method
+-cannot send commands continuously while holding button ~ must be fixed
+-does not read input for images
+-tested on emulator
+
 6/24/2024 ~ version 0.0.1 (initial git push)
 
 -initial push to git

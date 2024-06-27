@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">Evasive Routes</string>
-    <string name="hello_world">Evasive Routes</string>
+    <string name="app_name">SOCOM WALL-E</string>
+    <string name="hello_world">SOCOM WALL-E</string>
     <!-- description -->
     <string name="app_desc">Hello World Plugin that demonstrates all sorts of cool things for developers</string>
     <!-- Button Descriptions-->

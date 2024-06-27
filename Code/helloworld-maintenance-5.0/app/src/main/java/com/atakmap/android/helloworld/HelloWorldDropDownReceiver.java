@@ -27,6 +27,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -130,6 +131,11 @@ import com.atakmap.map.CameraController;
 import com.atakmap.map.layer.feature.Feature;
 import com.atakmap.map.layer.opengl.GLLayerFactory;
 import com.javacodegeeks.android.contentprovidertest.BirthProvider;
+
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZThread;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -422,6 +428,10 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
     }
     private final SEIsavedLists Data;
 
+    String mode = "tracks";
+    int throttle=1500;
+    int rudder=1500;
+
     /**************************** CONSTRUCTOR *****************************/
 
     public HelloWorldDropDownReceiver(final MapView mapView,
@@ -494,6 +504,10 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
 
         TextView modeText = helloView.findViewById(R.id.modeText);
         modeText.setText("Current Mode: "+mRelay.mode);
+        //modeText.setText("Current Mode: "+mRelay.mode);
+
+        EditText ipBox = helloView.findViewById(R.id.IpBox);
+        ipBox.setText("192.168.100.148:11994");
 
 
         //Find buttons by id and implement code for long click
@@ -523,25 +537,30 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 
+                toast("action in");
                 int id = view.getId();
                 if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     infoText.setText("Button Pressed");
 
                     if (id == R.id.buttonForward) {
                         toast("forward");
-                        mRelay.sendMSG("forward");
+                        //mRelay.sendMSG("forward");
+                        sendMSG("forward");
                     } else if (id == R.id.buttonBack) {
                         toast("back");
-                        mRelay.sendMSG("back");
+                        //mRelay.sendMSG("back");
+                        sendMSG("back");
                     } else if (id == R.id.buttonLeft) {
                         toast("left");
-                        mRelay.sendMSG("turnL");
+                        //mRelay.sendMSG("turnL");
+                        sendMSG("turnL");
                     } else if (id == R.id.buttonRight) {
                         toast("right");
-                        mRelay.sendMSG("turnR");
+                        //mRelay.sendMSG("turnR");
+                        sendMSG("turnR");
                     }
                 }
-                else{
+                if(motionEvent.getAction() == MotionEvent.ACTION_UP){
                     infoText.setText("Hold Buttons for Robot Movement");
                 }
 
@@ -607,13 +626,24 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
         final Button modeButton = helloView.findViewById(R.id.buttonMode);
         modeButton.setOnClickListener(v -> {
 
+            //uses mRelay.mode
+            /*
             if (mRelay.mode.equals("tracks")){
                 mRelay.mode = "screw";
             }else{
                 mRelay.mode = "tracks";
             }
-
             modeText.setText("Current Mode: "+mRelay.mode);
+            */
+
+            if (mode.equals("tracks")){
+                mode = "screw";
+            }else{
+                mode = "tracks";
+            }
+
+            modeText.setText("Current Mode: "+mode);
+            sendMSG("change Mode");
         });
 
         /** ************************* End SEI Buttons ************************* **/
@@ -862,6 +892,74 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
     }
 
     /**************************** PUBLIC METHODS *****************************/
+
+    public Boolean sendMSG(String command){
+
+        try (ZContext context = new ZContext()) {
+            //toast("entered send message");
+            EditText ipBox = helloView.findViewById(R.id.IpBox);
+            String connectionAddress = ipBox.getText().toString();
+
+            // Socket to talk to clients
+            ZMQ.Socket socket = context.createSocket(SocketType.PUB);
+            //ZMQ.Socket socket = context.createSocket(SocketType.REP);
+            socket.connect("tcp://"+connectionAddress);
+            //socket.connect("tcp://192.168.100.148:11994");
+
+            //I HAVE ZERO BASIS FOR WHAT THESE CONTROL NUMBERS MEAN
+            if (command.equals("change Mode")) {
+
+                if (mode.equals("tracks")) {
+                    mode = "screw";
+                } else {
+                    mode = "tracks";
+                }
+
+            }
+            else if (command.equals("forward")) {
+                throttle = 1500;
+                rudder = 0;
+            }
+            else if (command.equals("back")) {
+                throttle = -1500;
+                rudder = 0;
+            }
+            else if (command.equals("turnL")) {
+                throttle = 500;
+                rudder = -1000;
+            }
+            else if (command.equals("turnR")) {
+                throttle = 500;
+                rudder = 1000;
+            }
+
+            String msg = String.format("%s %s %s %s", "Commands" , mode, throttle, rudder );
+
+            //Thread.sleep(1);
+            int counter = 0;
+
+            while (!Thread.currentThread().isInterrupted()) { //does not send message without but while makes it send 4ever
+
+                socket.sendMore("RoboCommands");
+                socket.send(msg);
+                //toast("message sent"+counter);
+
+                if(counter>5){
+                    break;
+                }
+                counter++;
+            }
+
+            context.destroySocket(socket);
+        }catch (Exception e){
+            toast(e.toString());
+            System.out.println(e.toString());
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
 
     @Override
     public void disposeImpl() {
