@@ -1,3 +1,13 @@
+7/1/2024 ~ version 0.0.3 (send tested)
+
+-tested functionality of sending commands to robot
+-created button and input field to connect to any IP address/port
+-exported socket/connection creation outside of send functionality
+-fixed ability to continuously send while button is pushed.
+-cleaned up reliability of sending single messages
+-cleaned up toast messages used for debugging
+
+
 6/27/2024 ~ version 0.0.2 (semi-tested)
 
 -semi tested for buttons. 

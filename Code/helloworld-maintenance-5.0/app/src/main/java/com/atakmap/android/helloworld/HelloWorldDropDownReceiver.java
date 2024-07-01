@@ -21,6 +21,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -432,6 +433,14 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
     int throttle=1500;
     int rudder=1500;
 
+    ZContext context;
+    ZMQ.Socket socket;
+
+    private String currCommand = "";
+    private boolean sendThreadRunning = false;
+    private boolean cancelSendThread = false;
+    private Handler handler = new Handler();
+
     /**************************** CONSTRUCTOR *****************************/
 
     public HelloWorldDropDownReceiver(final MapView mapView,
@@ -509,6 +518,7 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
         EditText ipBox = helloView.findViewById(R.id.IpBox);
         ipBox.setText("192.168.100.148:11994");
 
+        connectToIP();
 
         //Find buttons by id and implement code for long click
         View.OnLongClickListener longClickListener = new OnLongClickListener() {
@@ -537,31 +547,38 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 
-                toast("action in");
+                //toast("action in");
                 int id = view.getId();
                 if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     infoText.setText("Button Pressed");
 
                     if (id == R.id.buttonForward) {
                         toast("forward");
+                        currCommand = "forward";
                         //mRelay.sendMSG("forward");
-                        sendMSG("forward");
+                        //sendMSG("forward");
                     } else if (id == R.id.buttonBack) {
                         toast("back");
+                        currCommand = "back";
                         //mRelay.sendMSG("back");
-                        sendMSG("back");
+                        //sendMSG("back");
                     } else if (id == R.id.buttonLeft) {
                         toast("left");
+                        currCommand = "turnL";
                         //mRelay.sendMSG("turnL");
-                        sendMSG("turnL");
+                        //sendMSG("turnL");
                     } else if (id == R.id.buttonRight) {
                         toast("right");
+                        currCommand = "turnR";
                         //mRelay.sendMSG("turnR");
-                        sendMSG("turnR");
+                        //sendMSG("turnR");
                     }
+
+                    handleDeleteDown();
                 }
                 if(motionEvent.getAction() == MotionEvent.ACTION_UP){
                     infoText.setText("Hold Buttons for Robot Movement");
+                    handleSendUp();
                 }
 
                 return true;
@@ -646,6 +663,13 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
             sendMSG("change Mode");
         });
 
+        final Button connectButton = helloView.findViewById(R.id.connectButton);
+        connectButton.setOnClickListener(v -> {
+
+            toast("change Connection");
+            connectToIP();
+        });
+
         /** ************************* End SEI Buttons ************************* **/
 
         /*
@@ -665,7 +689,6 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
         helloView.setOnGenericMotionListener(joystickListner);
 
     }
-
 
 
     /**
@@ -893,10 +916,62 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
 
     /**************************** PUBLIC METHODS *****************************/
 
-    public Boolean sendMSG(String command){
+    private void startSendThread() {
 
-        try (ZContext context = new ZContext()) {
+        Thread r = new Thread() {
+
+            @Override
+            public void run() {
+                try {
+
+                    sendThreadRunning = true;
+                    while (!cancelSendThread) {
+
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                sendMSG(currCommand);
+
+                            }
+                        });
+
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(
+                                    "Could not wait send.", e);
+                        }
+                    }
+                }
+                finally
+                {
+                    sendThreadRunning = false;
+                    cancelSendThread = false;
+                }
+            }
+        };
+
+        // actually start the delete char thread
+        r.start();
+    }
+
+    private void handleDeleteDown() {
+
+        if (!sendThreadRunning)
+            startSendThread();
+    }
+
+    private void handleSendUp() {
+        cancelSendThread = true;
+    }
+
+    private Boolean sendMSG(String command){
+
+        try {
             //toast("entered send message");
+
+            /*ZContext context = new ZContext();
+
             EditText ipBox = helloView.findViewById(R.id.IpBox);
             String connectionAddress = ipBox.getText().toString();
 
@@ -906,15 +981,20 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
             socket.connect("tcp://"+connectionAddress);
             //socket.connect("tcp://192.168.100.148:11994");
 
+             */
+
             //I HAVE ZERO BASIS FOR WHAT THESE CONTROL NUMBERS MEAN
             if (command.equals("change Mode")) {
 
+                /* mode change happens on button activation
                 if (mode.equals("tracks")) {
                     mode = "screw";
                 } else {
                     mode = "tracks";
-                }
+                }*/
 
+                throttle = 0;
+                rudder = 0;
             }
             else if (command.equals("forward")) {
                 throttle = 1500;
@@ -938,19 +1018,19 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
             //Thread.sleep(1);
             int counter = 0;
 
-            while (!Thread.currentThread().isInterrupted()) { //does not send message without but while makes it send 4ever
+            //while (!Thread.currentThread().isInterrupted()) { //does not send message without but while makes it send 4ever
 
                 socket.sendMore("RoboCommands");
                 socket.send(msg);
                 //toast("message sent"+counter);
 
                 if(counter>5){
-                    break;
+                    //break;
                 }
                 counter++;
-            }
+            //}
 
-            context.destroySocket(socket);
+            //context.destroySocket(socket);
         }catch (Exception e){
             toast(e.toString());
             System.out.println(e.toString());
@@ -959,6 +1039,24 @@ public class HelloWorldDropDownReceiver extends DropDownReceiver implements
         }
 
         return true;
+    }
+
+    private void connectToIP(){
+        if (context==null){
+            context = new ZContext();
+        }
+        try {
+            EditText ipBox = helloView.findViewById(R.id.IpBox);
+            String connectionAddress = ipBox.getText().toString();
+
+            // Socket to talk to clients
+            socket = context.createSocket(SocketType.PUB);
+            socket.connect("tcp://" + connectionAddress);
+        }catch (Exception e){
+            toast(e.toString());
+            System.out.println(e.toString());
+            e.printStackTrace();
+        }
     }
 
     @Override
